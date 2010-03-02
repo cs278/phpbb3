@@ -1208,6 +1208,15 @@ function get_schema_struct()
 		),
 	);
 
+	$schema_data['phpbb_messenger_queue'] = array(
+		'COLUMNS'		=> array(
+			'queue_id'				=> array('UINT', NULL, 'auto_increment'),
+			'queue_time'			=> array('TIMESTAMP', 0),
+			'queue_data'			=> array('MTEXT_UNI', ''),
+		),
+		'PRIMARY_KEY'	=> 'queue_id',
+	);
+
 	$schema_data['phpbb_moderator_cache'] = array(
 		'COLUMNS'		=> array(
 			'forum_id'				=> array('UINT', 0),
