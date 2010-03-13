@@ -27,15 +27,36 @@ function hook_ssl_login(&$hook)
 {
 	global $template;
 
-	if (!isset($template->_rootref['S_LOGIN_ACTION']))
+	$url = str_replace('http://', 'https://', generate_board_url()) . '/';
+
+	// Login action will always be force to SSL just in case
+	if (isset($template->_rootref['S_LOGIN_ACTION']))
 	{
-		return;
+		hook_ssl_login_rewirte_var('S_LOGIN_ACTION', $url);
 	}
 
-	$s_action = str_replace('http://', 'https://', generate_board_url()) . $template->_rootref['S_LOGIN_ACTION'];
+	// The login/logout link will be forced to SSL when it's a login link
+	if (isset($template->_rootref['U_LOGIN_LOGOUT']) && strpos($template->_rootref['U_LOGIN_LOGOUT'], 'mode=login') !== false)
+	{
+		hook_ssl_login_rewirte_var('U_LOGIN_LOGOUT', $url);
+	}
 
-	// Replace S_LOGIN_ACTION with our modified version
-	$template->assign_var('S_LOGIN_ACTION', $s_action);
+	// Registrations involve passwords, we should force SSL here too.
+	if (isset($template->_rootref['U_REGISTER']))
+	{
+		hook_ssl_login_rewirte_var('U_REGISTER', $url);
+	}
+}
+
+function hook_ssl_login_rewirte_var($var, $url)
+{
+	global $template;
+
+	$value = $template->_rootref[$var];
+	$value = (strpos($value, './') === 0) ? substr($value, 2) : $value;
+	$value = ltrim($value, '/');
+
+	$template->assign_var($var, $url . $value);
 }
 
 $phpbb_hook->register(array('template', 'display'), 'hook_ssl_login');
