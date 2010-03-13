@@ -2,6 +2,7 @@
 /**
  * Hook to enable DEBUG and DEBUG_EXTRA modes in phpBB3 for founder users.
  *
+ * @author Chris Smith <toonarmy@phpbb.com>
  * @copyright (c) 2009 Chris Smith
  * @license http://opensource.org/licenses/gpl-license.php GNU Public License
  * @license http://opensource.org/licenses/mit-license.php MIT License
