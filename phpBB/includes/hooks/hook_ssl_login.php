@@ -1,7 +1,7 @@
 <?php
 /**
- * Hook to force logins to be over SSL, this will work for normal user
- * authentication and passworded forum authentication.
+ * Hook to force passwords to travel over SSL, this will work for normal user
+ * authentication, passworded forum authentication and a few other places.
  *
  * @author Chris Smith <toonarmy@phpbb.com>
  * @copyright (c) 2010 Chris Smith
@@ -18,8 +18,16 @@ if (!defined('IN_PHPBB'))
 }
 
 /**
- * Hook to force the login over SSL
- *
+ * Hook to various password authentications to go over a secure connection,
+ * modified vars include:
+ * <ul>
+ * <li>Login link</li>
+ * <li>Login form action</li>
+ * <li>Registration link</li>
+ * <li>Registration form action</li>
+ * <li>UCP account settings form action</li>
+ * </ul>
+ * 
  * @param phpbb_hook $hook phpBB hook instance
  * @return void
  */
