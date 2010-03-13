@@ -46,6 +46,15 @@ function hook_ssl_login(&$hook)
 	{
 		hook_ssl_login_rewirte_var('U_REGISTER', $url);
 	}
+
+	// Rewrite the UCP form action on registration or account settings
+	if (isset($template->_rootref['S_UCP_ACTION']) && (
+		strpos($template->_rootref['S_UCP_ACTION'], 'mode=register') !== false ||
+		isset($template->_rootref['CUR_PASSWORD']))
+	)
+	{
+		hook_ssl_login_rewirte_var('S_UCP_ACTION', $url);
+	}
 }
 
 function hook_ssl_login_rewirte_var($var, $url)
