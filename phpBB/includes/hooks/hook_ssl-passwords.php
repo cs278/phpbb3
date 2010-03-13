@@ -33,9 +33,9 @@ if (!defined('IN_PHPBB'))
  */
 function hook_ssl_passwords(&$hook)
 {
-	global $template;
+	global $template, $user;
 
-	$url = str_replace('http://', 'https://', generate_board_url()) . '/';
+	$url = str_replace('http://', 'https://', generate_board_url(true)) . $user->page['script_path'];
 
 	// Login action will always be force to SSL just in case
 	if (isset($template->_rootref['S_LOGIN_ACTION']))
