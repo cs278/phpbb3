@@ -31,7 +31,7 @@ if (!defined('IN_PHPBB'))
  * @param phpbb_hook $hook phpBB hook instance
  * @return void
  */
-function hook_ssl_login(&$hook)
+function hook_ssl_passwords(&$hook)
 {
 	global $template;
 
@@ -40,19 +40,19 @@ function hook_ssl_login(&$hook)
 	// Login action will always be force to SSL just in case
 	if (isset($template->_rootref['S_LOGIN_ACTION']))
 	{
-		hook_ssl_login_rewirte_var('S_LOGIN_ACTION', $url);
+		hook_ssl_passwords_rewirte_var('S_LOGIN_ACTION', $url);
 	}
 
 	// The login/logout link will be forced to SSL when it's a login link
 	if (isset($template->_rootref['U_LOGIN_LOGOUT']) && strpos($template->_rootref['U_LOGIN_LOGOUT'], 'mode=login') !== false)
 	{
-		hook_ssl_login_rewirte_var('U_LOGIN_LOGOUT', $url);
+		hook_ssl_passwords_rewirte_var('U_LOGIN_LOGOUT', $url);
 	}
 
 	// Registrations involve passwords, we should force SSL here too.
 	if (isset($template->_rootref['U_REGISTER']))
 	{
-		hook_ssl_login_rewirte_var('U_REGISTER', $url);
+		hook_ssl_passwords_rewirte_var('U_REGISTER', $url);
 	}
 
 	// Rewrite the UCP form action on registration or account settings
@@ -61,11 +61,11 @@ function hook_ssl_login(&$hook)
 		isset($template->_rootref['CUR_PASSWORD']))
 	)
 	{
-		hook_ssl_login_rewirte_var('S_UCP_ACTION', $url);
+		hook_ssl_passwords_rewirte_var('S_UCP_ACTION', $url);
 	}
 }
 
-function hook_ssl_login_rewirte_var($var, $url)
+function hook_ssl_passwords_rewirte_var($var, $url)
 {
 	global $template;
 
@@ -76,4 +76,4 @@ function hook_ssl_login_rewirte_var($var, $url)
 	$template->assign_var($var, $url . $value);
 }
 
-$phpbb_hook->register(array('template', 'display'), 'hook_ssl_login');
+$phpbb_hook->register(array('template', 'display'), 'hook_ssl_passwords');
