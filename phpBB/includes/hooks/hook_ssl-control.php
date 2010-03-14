@@ -202,28 +202,26 @@ class phpbb_hook_ssl_control
 	 * Convenience for quick hooking
 	 * 
 	 * @param phpbb_hook $hook
-	 * @return phpbb_hook_ssl_control
+	 * @return pvoid
 	 */
 	static public function hook(&$hook)
 	{
 		$instance = new self;
 
-		return $instance->run($hook);
+		$instance->run($hook);
 	}
 
 	/**
 	 * Run the hook
 	 * 
 	 * @param phpbb_hook $hook
-	 * @return phpbb_hook_ssl_control
+	 * @return void
 	 */
 	public function run(&$hook)
 	{
 		// Run this one first, it might redirect us
 		$this->rewrite_paths();
 		$this->rewrite_vars();
-
-		return $this;
 	}
 
 	protected function rewrite_vars()
