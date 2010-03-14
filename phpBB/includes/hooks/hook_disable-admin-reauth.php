@@ -34,5 +34,7 @@ function hook_disable_admin_reauth(&$hook)
 	}
 }
 
-//$phpbb_hook->register('phpbb_user_session_handler', 'hook_disable_admin_reauth');
-
+if (defined('PHPBB_HOOK_DISABLE_ADMIN_REAUTH') && PHPBB_HOOK_DISABLE_ADMIN_REAUTH)
+{
+	$phpbb_hook->register('phpbb_user_session_handler', 'hook_disable_admin_reauth');
+}
