@@ -202,7 +202,7 @@ class phpbb_hook_ssl_control
 	 * Convenience for quick hooking
 	 * 
 	 * @param phpbb_hook $hook
-	 * @return pvoid
+	 * @return void
 	 */
 	static public function hook(&$hook)
 	{
