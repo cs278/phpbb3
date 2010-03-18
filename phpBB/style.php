@@ -45,14 +45,15 @@ if (!empty($load_extensions) && function_exists('dl'))
 	}
 }
 
-
-$sid = (isset($_GET['sid']) && !is_array($_GET['sid'])) ? htmlspecialchars($_GET['sid']) : '';
 $id = (isset($_GET['id'])) ? intval($_GET['id']) : 0;
+$lang = (isset($_GET['lang']) && is_string($_GET['lang'])) ? htmlspecialchars($_GET['lang']) : '';
 
-if (strspn($sid, 'abcdefABCDEF0123456789') !== strlen($sid))
+if (!preg_match('#^[a-z0-9_]+$#Di'))
 {
-	$sid = '';
+	$lang = $config['default_lang'];
 }
+
+$lang = basename($lang);
 
 // This is a simple script to grab and output the requested CSS data stored in the DB
 // We include a session_id check to try and limit 3rd party linking ... unless they
@@ -79,27 +80,8 @@ if ($id)
 	unset($dbpasswd);
 
 	$config = $cache->obtain_config();
-	$user = false;
-
-	if ($sid)
-	{
-		$sql = 'SELECT u.user_id, u.user_lang
-			FROM ' . SESSIONS_TABLE . ' s, ' . USERS_TABLE . " u
-			WHERE s.session_id = '" . $db->sql_escape($sid) . "'
-				AND s.session_user_id = u.user_id";
-		$result = $db->sql_query($sql);
-		$user = $db->sql_fetchrow($result);
-		$db->sql_freeresult($result);
-	}
 
 	$recompile = $config['load_tplcompile'];
-	if (!$user)
-	{
-		$id			= ($id) ? $id : $config['default_style'];
-//		Commented out because calls do not always include the SID anymore
-//		$recompile	= false;
-		$user		= array('user_id' => ANONYMOUS);
-	}
 
 	$sql = 'SELECT s.style_id, c.theme_id, c.theme_data, c.theme_path, c.theme_name, c.theme_mtime, i.*, t.template_path
 		FROM ' . STYLES_TABLE . ' s, ' . STYLES_TEMPLATE_TABLE . ' t, ' . STYLES_THEME_TABLE . ' c, ' . STYLES_IMAGESET_TABLE . ' i
@@ -116,12 +98,7 @@ if ($id)
 		exit;
 	}
 
-	if ($user['user_id'] == ANONYMOUS)
-	{
-		$user['user_lang'] = $config['default_lang'];
-	}
-
-	$user_image_lang = (file_exists($phpbb_root_path . 'styles/' . $theme['imageset_path'] . '/imageset/' . $user['user_lang'])) ? $user['user_lang'] : $config['default_lang'];
+	$user_image_lang = (file_exists($phpbb_root_path . 'styles/' . $theme['imageset_path'] . '/imageset/' . $lang)) ? $lang : $config['default_lang'];
 
 	// Same query in session.php
 	$sql = 'SELECT *
@@ -225,7 +202,7 @@ if ($id)
 		'{T_IMAGESET_PATH}'			=> "{$phpbb_root_path}styles/" . $theme['imageset_path'] . '/imageset',
 		'{T_IMAGESET_LANG_PATH}'	=> "{$phpbb_root_path}styles/" . $theme['imageset_path'] . '/imageset/' . $user_image_lang,
 		'{T_STYLESHEET_NAME}'		=> $theme['theme_name'],
-		'{S_USER_LANG}'				=> $user['user_lang']
+		'{S_USER_LANG}'				=> $lang,
 	);
 
 	$theme['theme_data'] = str_replace(array_keys($replace), array_values($replace), $theme['theme_data']);
