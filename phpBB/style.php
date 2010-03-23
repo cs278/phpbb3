@@ -48,7 +48,7 @@ if (!empty($load_extensions) && function_exists('dl'))
 $id = (isset($_GET['id'])) ? intval($_GET['id']) : 0;
 $lang = (isset($_GET['lang']) && is_string($_GET['lang'])) ? htmlspecialchars($_GET['lang']) : '';
 
-if (!preg_match('#^[a-z0-9_]+$#Di'))
+if (!preg_match('#^[a-z0-9_]+$#Di', $lang))
 {
 	$lang = $config['default_lang'];
 }
