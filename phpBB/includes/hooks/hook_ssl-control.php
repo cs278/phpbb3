@@ -32,6 +32,11 @@ class phpbb_hook_ssl_control
 	const OFF = 2;
 
 	/**
+	 * Force current protocol
+	 */
+	const CURRENT = 3;
+
+	/**
 	 * @var array Paths matched against $user->page['page'] to control SSL status of using redirects, empty string means any other path
 	 */
 	protected $_paths = array(
@@ -39,8 +44,9 @@ class phpbb_hook_ssl_control
 		'ucp.php?mode=register'	=> self::ON,
 		'ucp.php?mode=login'	=> self::ON,
 		'ucp.php?i=profile&mode=reg_details'	=> self::ON,
-		'viewforum.php?'		=> self::OFF,
-		'viewforum.php'			=> self::ON,
+
+		'viewforum.php?f='		=> self::OFF,
+		'viewforum.php'			=> self::CURRENT,
 		
 		''						=> self::OFF,
 	);
@@ -289,6 +295,11 @@ class phpbb_hook_ssl_control
 					redirect($url);
 				}
 				// First path to match we break
+				break;
+			}
+			else if ($status === self::CURRENT)
+			{
+				// Forced to continue with this protocol
 				break;
 			}
 		}
