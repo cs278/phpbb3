@@ -39,6 +39,8 @@ class phpbb_hook_ssl_control
 		'ucp.php?mode=register'	=> self::ON,
 		'ucp.php?mode=login'	=> self::ON,
 		'ucp.php?i=profile&mode=reg_details'	=> self::ON,
+		'viewforum.php?'		=> self::OFF,
+		'viewforum.php'			=> self::ON,
 		
 		''						=> self::OFF,
 	);
