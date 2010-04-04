@@ -2139,8 +2139,8 @@ function append_sid($url, $params = false, $is_amp = true, $session_id = false)
 {
 	global $_SID, $_EXTRA_URL, $phpbb_hook;
 
-	// Developers using the hook function need to globalise the $_SID and $_EXTRA_URL on their own and also handle it appropiatly.
-	// They could mimick most of what is within this function
+	// Developers using the hook function need to globalise the $_SID and $_EXTRA_URL on their own and also handle it appropriately.
+	// They could mimic most of what is within this function
 	if (!empty($phpbb_hook) && $phpbb_hook->call_hook(__FUNCTION__, $url, $params, $is_amp, $session_id))
 	{
 		if ($phpbb_hook->hook_return(__FUNCTION__))
@@ -2297,6 +2297,8 @@ function redirect($url, $return = false, $disable_cd_check = false)
 {
 	global $db, $cache, $config, $user, $phpbb_root_path;
 
+	$failover_flag = false;
+
 	if (empty($user->lang))
 	{
 		$user->add_lang('common');
@@ -2344,65 +2346,69 @@ function redirect($url, $return = false, $disable_cd_check = false)
 			if (!file_exists($pathinfo['dirname']))
 			{
 				// fallback to "last known user page"
+				// at least this way we know the user does not leave the phpBB root
 				$url = generate_board_url() . '/' . $user->page['page'];
-				break;
+				$failover_flag = true;
 			}
 		}
 
-		// Is the uri pointing to the current directory?
-		if ($pathinfo['dirname'] == '.')
+		if (!$failover_flag)
 		{
-			$url = str_replace('./', '', $url);
-
-			// Strip / from the beginning
-			if ($url && substr($url, 0, 1) == '/')
+			// Is the uri pointing to the current directory?
+			if ($pathinfo['dirname'] == '.')
 			{
-				$url = substr($url, 1);
-			}
+				$url = str_replace('./', '', $url);
 
-			if ($user->page['page_dir'])
-			{
-				$url = generate_board_url() . '/' . $user->page['page_dir'] . '/' . $url;
+				// Strip / from the beginning
+				if ($url && substr($url, 0, 1) == '/')
+				{
+					$url = substr($url, 1);
+				}
+
+				if ($user->page['page_dir'])
+				{
+					$url = generate_board_url() . '/' . $user->page['page_dir'] . '/' . $url;
+				}
+				else
+				{
+					$url = generate_board_url() . '/' . $url;
+				}
 			}
 			else
 			{
+				// Used ./ before, but $phpbb_root_path is working better with urls within another root path
+				$root_dirs = explode('/', str_replace('\\', '/', phpbb_realpath($phpbb_root_path)));
+				$page_dirs = explode('/', str_replace('\\', '/', phpbb_realpath($pathinfo['dirname'])));
+				$intersection = array_intersect_assoc($root_dirs, $page_dirs);
+
+				$root_dirs = array_diff_assoc($root_dirs, $intersection);
+				$page_dirs = array_diff_assoc($page_dirs, $intersection);
+
+				$dir = str_repeat('../', sizeof($root_dirs)) . implode('/', $page_dirs);
+
+				// Strip / from the end
+				if ($dir && substr($dir, -1, 1) == '/')
+				{
+					$dir = substr($dir, 0, -1);
+				}
+
+				// Strip / from the beginning
+				if ($dir && substr($dir, 0, 1) == '/')
+				{
+					$dir = substr($dir, 1);
+				}
+
+				$url = str_replace($pathinfo['dirname'] . '/', '', $url);
+
+				// Strip / from the beginning
+				if (substr($url, 0, 1) == '/')
+				{
+					$url = substr($url, 1);
+				}
+
+				$url = (!empty($dir) ? $dir . '/' : '') . $url;
 				$url = generate_board_url() . '/' . $url;
 			}
-		}
-		else
-		{
-			// Used ./ before, but $phpbb_root_path is working better with urls within another root path
-			$root_dirs = explode('/', str_replace('\\', '/', phpbb_realpath($phpbb_root_path)));
-			$page_dirs = explode('/', str_replace('\\', '/', phpbb_realpath($pathinfo['dirname'])));
-			$intersection = array_intersect_assoc($root_dirs, $page_dirs);
-
-			$root_dirs = array_diff_assoc($root_dirs, $intersection);
-			$page_dirs = array_diff_assoc($page_dirs, $intersection);
-
-			$dir = str_repeat('../', sizeof($root_dirs)) . implode('/', $page_dirs);
-
-			// Strip / from the end
-			if ($dir && substr($dir, -1, 1) == '/')
-			{
-				$dir = substr($dir, 0, -1);
-			}
-
-			// Strip / from the beginning
-			if ($dir && substr($dir, 0, 1) == '/')
-			{
-				$dir = substr($dir, 1);
-			}
-
-			$url = str_replace($pathinfo['dirname'] . '/', '', $url);
-
-			// Strip / from the beginning
-			if (substr($url, 0, 1) == '/')
-			{
-				$url = substr($url, 1);
-			}
-
-			$url = (!empty($dir) ? $dir . '/' : '') . $url;
-			$url = generate_board_url() . '/' . $url;
 		}
 	}
 
@@ -4251,7 +4257,7 @@ function page_header($page_title = '', $display_online_list = true, $item_id = 0
 		'S_TOPIC_ID'			=> $topic_id,
 
 		'S_LOGIN_ACTION'		=> ((!defined('ADMIN_START')) ? append_sid("{$phpbb_root_path}ucp.$phpEx", 'mode=login') : append_sid("index.$phpEx", false, true, $user->session_id)),
-		'S_LOGIN_REDIRECT'		=> build_hidden_fields(array('redirect' => str_replace('&amp;', '&', build_url()))),
+		'S_LOGIN_REDIRECT'		=> build_hidden_fields(array('redirect' => build_url())),
 
 		'S_ENABLE_FEEDS'			=> ($config['feed_enable']) ? true : false,
 		'S_ENABLE_FEEDS_OVERALL'	=> ($config['feed_overall']) ? true : false,
