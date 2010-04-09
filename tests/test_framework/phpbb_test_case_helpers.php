@@ -75,7 +75,7 @@ NOTE: The database is dropped and recreated with the phpbb-db-schema! Do NOT spe
 	{
 		global $phpbb_root_path, $phpEx;
 		
-		require_once '../phpBB/includes/acm/' . $type . '.php';
+		require_once '../phpBB/includes/acm/acm_' . $type . '.php';
 		
 		return new acm;
 	}
