@@ -70,6 +70,15 @@ NOTE: The database is dropped and recreated with the phpbb-db-schema! Do NOT spe
 
 		return $db;
 	}
+	
+	public function new_acm($type)
+	{
+		global $phpbb_root_path, $phpEx;
+		
+		require_once '../phpBB/includes/acm/' . $type . '.php';
+		
+		return new acm;
+	}
 
 	public function setExpectedTriggerError($errno, $message = '')
 	{
