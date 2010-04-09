@@ -27,6 +27,6 @@ class phpbb_cache_test extends phpbb_test_case
 	{
 		$cache = $this->new_acm('null');
 	
-		$this->assertFalse($this->get(md5('doNotExist:' . rand(0, PHP_INT_MAX))));
+		$this->assertFalse($cache->get(md5('doNotExist:' . rand(0, PHP_INT_MAX))));
 	}
 }
