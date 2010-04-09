@@ -23,13 +23,8 @@ if (!class_exists('acm_memory'))
 }
 
 /**
-* ACM for XCache
+* ACM for Wincache
 * @package acm
-*
-* To use this module you need ini_get() enabled and the following INI settings configured as follows:
-* - xcache.var_size > 0
-* - xcache.admin.enable_auth = off (or xcache.admin.user and xcache.admin.password set)
-*
 */
 class acm extends acm_memory
 {
