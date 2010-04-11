@@ -1047,7 +1047,8 @@ function phpbb_own_realpath($path)
 	$resolved = str_replace('/', DIRECTORY_SEPARATOR, $resolved);
 
 	// Check for DIRECTORY_SEPARATOR at the end (and remove it!)
-	if (substr($resolved, -1) == DIRECTORY_SEPARATOR)
+	// Don't remove the / from '/' ;)
+	if (strlen($resolved) > 1 && substr($resolved, -1) == DIRECTORY_SEPARATOR)
 	{
 		return substr($resolved, 0, -1);
 	}
