@@ -1004,6 +1004,12 @@ function phpbb_own_realpath($path)
 		}
 	}
 
+	// Path of /. or /../../.. will result in an empty array here, fix that
+	if (empty($bits))
+	{
+		$bits = array('');
+	}
+
 	// Prepend the path prefix
 	array_unshift($bits, $path_prefix);
 
