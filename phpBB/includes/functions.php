@@ -998,8 +998,11 @@ function phpbb_own_realpath($path)
 			else if ($absolute) // ie. !isset($bits[$i - 1]) && $absolute
 			{
 				// We have an absolute path trying to descend above the root of the filesystem
-				// ... Error!
-				return false;
+				// realpath() anchors the result at /
+				unset($bits[$i]);
+				$i -= 1;
+				$max -= 1;
+				$bits = array_values($bits);
 			}
 		}
 	}
