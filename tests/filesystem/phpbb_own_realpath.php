@@ -122,15 +122,15 @@ class phpbb_filesystem_phpbb_own_realpath_test extends phpbb_test_case
 	{
 		$this->requires('realpath');
 
-		$this->assertEquals('/', phpbb_own_realpath('/'), 'PHPBB3-9540 Fix a bug where a path resolved to / is reduced to an empty string.');
+		$this->assertEquals(DIRECTORY_SEPARATOR, phpbb_own_realpath('/'), 'PHPBB3-9540 Fix a bug where a path resolved to / is reduced to an empty string.');
 	}
 
 	public function test_bug_9543()
 	{
 		$this->requires('realpath');
 
-		$this->assertEquals('/', phpbb_own_realpath('/../../..'), 'PHPBB3-9543 Resolving /../../.. results in an empty string.');
-		$this->assertEquals('/', phpbb_own_realpath('/.'), 'PHPBB3-9543 Resolving /. results in an empty string.');
+		$this->assertEquals(DIRECTORY_SEPARATOR, phpbb_own_realpath('/../../..'), 'PHPBB3-9543 Resolving /../../.. results in an empty string.');
+		$this->assertEquals(DIRECTORY_SEPARATOR, phpbb_own_realpath('/.'), 'PHPBB3-9543 Resolving /. results in an empty string.');
 	}
 
 	public function test_bug_9541()
@@ -141,7 +141,7 @@ class phpbb_filesystem_phpbb_own_realpath_test extends phpbb_test_case
 		$files = scandir('/');
 		$path = array_pop($files);
 
-		$this->assertEquals('/' . $path, phpbb_own_realpath('/../../../../' . $path), 'PHPBB3-9541 Upwards traversals can go no higher than the root directory.');
+		$this->assertEquals(DIRECTORY_SEPARATOR . $path, phpbb_own_realpath('/../../../../' . $path), 'PHPBB3-9541 Upwards traversals can go no higher than the root directory.');
 	}
 
 	public function test_bug_9539()
