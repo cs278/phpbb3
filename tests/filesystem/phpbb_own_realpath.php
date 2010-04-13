@@ -98,7 +98,7 @@ class phpbb_filesystem_phpbb_own_realpath_test extends phpbb_test_case
 			array('/bin/sh'),
 
 			array('/usr/./local/bin/../sbin/../..///././//./bin/../sbin/'),
-			array('/boot/../usr/../root/../home/../tmp/..'),
+			array('/boot/../usr/../root/../home/../tmp/../'), // Slash on the end because suhosin breaks this
 			array('/usr/../root/././home/..'),
 			array('/usr/../../../bin/'),
 
@@ -118,36 +118,73 @@ class phpbb_filesystem_phpbb_own_realpath_test extends phpbb_test_case
 		$this->assertEquals(realpath($path), phpbb_own_realpath($path));
 	}
 
-	public function test_bug_9533()
+	public function test_bug_9540()
+	{
+		$this->requires('realpath');
+
+		$this->assertEquals('/', phpbb_own_realpath('/'), 'PHPBB3-9540 Fix a bug where a path resolved to / is reduced to an empty string.');
+	}
+
+	public function test_bug_9543()
+	{
+		$this->requires('realpath');
+
+		$this->assertEquals('/', phpbb_own_realpath('/../../..'), 'PHPBB3-9543 Resolving /../../.. results in an empty string.');
+		$this->assertEquals('/', phpbb_own_realpath('/.'), 'PHPBB3-9543 Resolving /. results in an empty string.');
+	}
+
+	public function test_bug_9541()
+	{
+		$this->requires('realpath');
+
+		// Pick out a path to test against
+		$files = scandir('/');
+		$path = array_pop($files);
+
+		$this->assertEquals('/' . $path, phpbb_own_realpath('/../../../../' . $path), 'PHPBB3-9541 Upwards traversals can go no higher than the root directory.');
+	}
+
+	public function test_bug_9539()
 	{
 		$this->requires('symlink', 'posix', 'realpath');
 
 		symlink('/', 'link');
-		$this->assertEquals('/', phpbb_own_realpath('link'), 'Correctly resolve symlinks pointing to /');
+		$this->assertEquals('/', phpbb_own_realpath('link'), 'PHPBB3-9539 Correctly resolve symlinks pointing to /');
 		unlink('link');
 
 		symlink('.', 'link');
-		$this->assertEquals(getcwd(), phpbb_own_realpath('link'), 'Correctly resolve symlinks pointing to .');
+		$this->assertEquals(getcwd(), phpbb_own_realpath('link'), 'PHPBB3-9539 Correctly resolve symlinks pointing to .');
 		unlink('link');
 
 		symlink('..', 'link');
-		$this->assertEquals(realpath(getcwd() . '/..'), phpbb_own_realpath('link'), 'Correctly resolve symlinks pointing to ..');
+		$this->assertEquals(realpath(getcwd() . '/..'), phpbb_own_realpath('link'), 'PHPBB3-9539 Correctly resolve symlinks pointing to ..');
 		unlink('link');
 
 		touch('file');
 
 		symlink('file', 'link');
-		$this->assertEquals(getcwd() . '/file', phpbb_own_realpath('file'), 'Correctly resolve symlinks pointing to a relative file');
+		$this->assertEquals(getcwd() . '/file', phpbb_own_realpath('file'), 'PHPBB3-9539 Correctly resolve symlinks pointing to a relative file');
 		unlink('link');
 
 		symlink('./file', 'link');
-		$this->assertEquals(getcwd() . '/file', phpbb_own_realpath('file'), 'Correctly resolve symlinks pointing to a relative file');
+		$this->assertEquals(getcwd() . '/file', phpbb_own_realpath('file'), 'PHPBB3-9539 Correctly resolve symlinks pointing to a relative file');
 		unlink('link');
 
 		symlink('../' . $this->dir . '/file', 'link');
-		$this->assertEquals(getcwd() . '/file', phpbb_own_realpath('file'), 'Correctly resolve symlinks pointing to a relative file');
+		$this->assertEquals(getcwd() . '/file', phpbb_own_realpath('file'), 'PHPBB3-9539 Correctly resolve symlinks pointing to a relative file');
 		unlink('link');
 
 		unlink('file');
+	}
+
+	public function test_bug_9544()
+	{
+		$this->requires('realpath');
+
+		// Pick out a path to test against
+		$files = scandir('/');
+		$path = array_pop($files);
+
+		$this->assertFalse(phpbb_own_realpath('/' . md5(time() . rand(0, PHP_INT_MAX)) . '/../' . $path), 'PHPBB3-9544 Ensure the parent directory exists before traversing up tree.');
 	}
 }
