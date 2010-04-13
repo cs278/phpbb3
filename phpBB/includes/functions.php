@@ -988,6 +988,15 @@ function phpbb_own_realpath($path)
 				if ($bits[$i - 1] != '..')
 				{
 					// We found a .. and we are able to traverse upwards, lets do it!
+
+					// Check the path exists first though
+					$path = ($absolute ? DIRECTORY_SEPARATOR : '') . implode(DIRECTORY_SEPARATOR, array_slice($bits, 0, $i));
+
+					if (!file_exists($path))
+					{
+						return false;
+					}
+
 					unset($bits[$i]);
 					unset($bits[$i - 1]);
 					$i -= 2;
