@@ -1031,6 +1031,11 @@ function phpbb_own_realpath($path)
 			if ($symlink_resolve && is_link("$resolved/$bit") && ($link = readlink("$resolved/$bit")))
 			{
 				// Resolved a symlink.
+				if (!is_absolute($link))
+				{
+					// Relative symlinks should be resolved relative to their location
+					$link = phpbb_own_realpath("$resolved/$link");
+				}
 				$resolved = $link . (($i == $max) ? '' : '/');
 				continue;
 			}
