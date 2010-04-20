@@ -2128,7 +2128,7 @@ class user extends session
 			$utc = new DateTimeZone('UTC');
 		}
 
-		$time = new phpbb_DateTime("@$gmepoch", $utc, $this);
+		$time = new phpbb_datetime("@$gmepoch", $utc, $this);
 		$time->setTimezone($this->tz);
 
 		return $time->format($format, $forcedate);
