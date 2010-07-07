@@ -544,7 +544,11 @@ class custom_profile
 				{
 					global $user;
 					// d/m/y 00:00 GMT isn't necessarily on the same d/m/y in the user's timezone, so add the timezone seconds
-					return $user->format_date(gmmktime(0, 0, 0, $month, $day, $year) + $user->timezone + $user->dst, $user->lang['DATE_FORMAT'], true);
+
+					return $user->create_datetime()
+						->setDate($year, $month, $day)
+						->setTime(0, 0, 0)
+						->format($user->lang['DATE_FORMAT'], true);
 				}
 
 				return $value;

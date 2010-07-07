@@ -1643,7 +1643,7 @@ function show_profile($data, $user_notes_enabled = false, $warn_user_enabled = f
 
 		if ($bday_year)
 		{
-			$now = getdate(time() + $user->timezone + $user->dst - date('Z'));
+			$now = getdate($user->create_datetime()->getTimestamp());
 
 			$diff = $now['mon'] - $bday_month;
 			if ($diff == 0)
