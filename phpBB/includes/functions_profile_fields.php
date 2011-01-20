@@ -376,6 +376,7 @@ class custom_profile
 			break;
 
 			case 'sqlite':
+			case 'sqlite3':
 			case 'mssql':
 			case 'mssql_odbc':
 			case 'mssqlnative':

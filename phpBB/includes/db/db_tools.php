@@ -250,6 +250,36 @@ class phpbb_db_tools
 			'VARBINARY'	=> 'blob',
 		),
 
+		'sqlite3'	=> array(
+			'INT:'		=> 'int(%d)',
+			'BINT'		=> 'bigint(20)',
+			'UINT'		=> 'INTEGER UNSIGNED', //'mediumint(8) UNSIGNED',
+			'UINT:'		=> 'INTEGER UNSIGNED', // 'int(%d) UNSIGNED',
+			'TINT:'		=> 'tinyint(%d)',
+			'USINT'		=> 'INTEGER UNSIGNED', //'mediumint(4) UNSIGNED',
+			'BOOL'		=> 'INTEGER UNSIGNED', //'tinyint(1) UNSIGNED',
+			'VCHAR'		=> 'varchar(255)',
+			'VCHAR:'	=> 'varchar(%d)',
+			'CHAR:'		=> 'char(%d)',
+			'XSTEXT'	=> 'text(65535)',
+			'STEXT'		=> 'text(65535)',
+			'TEXT'		=> 'text(65535)',
+			'MTEXT'		=> 'mediumtext(16777215)',
+			'XSTEXT_UNI'=> 'text(65535)',
+			'STEXT_UNI'	=> 'text(65535)',
+			'TEXT_UNI'	=> 'text(65535)',
+			'MTEXT_UNI'	=> 'mediumtext(16777215)',
+			'TIMESTAMP'	=> 'INTEGER UNSIGNED', //'int(11) UNSIGNED',
+			'DECIMAL'	=> 'decimal(5,2)',
+			'DECIMAL:'	=> 'decimal(%d,2)',
+			'PDECIMAL'	=> 'decimal(6,3)',
+			'PDECIMAL:'	=> 'decimal(%d,3)',
+			'VCHAR_UNI'	=> 'varchar(255)',
+			'VCHAR_UNI:'=> 'varchar(%d)',
+			'VCHAR_CI'	=> 'varchar(255)',
+			'VARBINARY'	=> 'blob',
+		),
+
 		'postgres'	=> array(
 			'INT:'		=> 'INT4',
 			'BINT'		=> 'INT8',
@@ -291,7 +321,7 @@ class phpbb_db_tools
 	* A list of supported DBMS. We change this class to support more DBMS, the DBMS itself only need to follow some rules.
 	* @var array
 	*/
-	var $supported_dbms = array('firebird', 'mssql', 'mssqlnative', 'mysql_40', 'mysql_41', 'oracle', 'postgres', 'sqlite');
+	var $supported_dbms = array('firebird', 'mssql', 'mssqlnative', 'mysql_40', 'mysql_41', 'oracle', 'postgres', 'sqlite', 'sqlite3');
 
 	/**
 	* This is set to true if user only wants to return the 'to-be-executed' SQL statement(s) (as an array).
@@ -490,6 +520,7 @@ class phpbb_db_tools
 					case 'mysql_41':
 					case 'postgres':
 					case 'sqlite':
+					case 'sqlite3':
 						$table_sql .= ",\n\t PRIMARY KEY (" . implode(', ', $table_data['PRIMARY_KEY']) . ')';
 					break;
 
@@ -527,6 +558,7 @@ class phpbb_db_tools
 
 			case 'mysql_40':
 			case 'sqlite':
+			case 'sqlite3':
 				$table_sql .= "\n);";
 				$statements[] = $table_sql;
 			break;
@@ -643,7 +675,7 @@ class phpbb_db_tools
 		$sqlite = false;
 
 		// For SQLite we need to perform the schema changes in a much more different way
-		if ($this->db->sql_layer == 'sqlite' && $this->return_statements)
+		if (strpos($this->db->sql_layer, 'sqlite') === 0 && $this->return_statements)
 		{
 			$sqlite_data = array();
 			$sqlite = true;
@@ -1124,6 +1156,7 @@ class phpbb_db_tools
 
 			// ugh, SQLite
 			case 'sqlite':
+			case 'sqlite3':
 				$sql = "SELECT sql
 					FROM sqlite_master
 					WHERE type = 'table'
@@ -1632,6 +1665,7 @@ class phpbb_db_tools
 			break;
 
 			case 'sqlite':
+			case 'sqlite3':
 				$return_array['primary_key_set'] = false;
 				if (isset($column_data[2]) && $column_data[2] == 'auto_increment')
 				{
@@ -1714,13 +1748,16 @@ class phpbb_db_tools
 			break;
 
 			case 'sqlite':
+			case 'sqlite3':
 
 				if ($inline && $this->return_statements)
 				{
 					return $column_name . ' ' . $column_data['column_type_sql'];
 				}
 
-				if (version_compare(sqlite_libversion(), '3.0') == -1)
+				// SQLite2 always has to do this mess, or SQLite3 <= 3.1.3 per the following:
+				// "After ADD COLUMN has been run on a database, that database will not be readable by SQLite version 3.1.3 and earlier." -- http://www.sqlite.org/lang_altertable.html
+				if ($db->sql_layer == 'sqlite' || version_compare($db->sql_server_info(true), '3.1.3', '<='))
 				{
 					$sql = "SELECT sql
 						FROM sqlite_master
@@ -1813,67 +1850,61 @@ class phpbb_db_tools
 			break;
 
 			case 'sqlite':
+			case 'sqlite3':
 
 				if ($inline && $this->return_statements)
 				{
 					return $column_name;
 				}
 
-				if (version_compare(sqlite_libversion(), '3.0') == -1)
+				$sql = "SELECT sql
+					FROM sqlite_master
+					WHERE type = 'table'
+						AND name = '{$table_name}'
+					ORDER BY type DESC, name;";
+				$result = $this->db->sql_query($sql);
+
+				if (!$result)
 				{
-					$sql = "SELECT sql
-						FROM sqlite_master
-						WHERE type = 'table'
-							AND name = '{$table_name}'
-						ORDER BY type DESC, name;";
-					$result = $this->db->sql_query($sql);
-
-					if (!$result)
-					{
-						break;
-					}
-
-					$row = $this->db->sql_fetchrow($result);
-					$this->db->sql_freeresult($result);
-
-					$statements[] = 'begin';
-
-					// Create a backup table and populate it, destroy the existing one
-					$statements[] = preg_replace('#CREATE\s+TABLE\s+"?' . $table_name . '"?#i', 'CREATE TEMPORARY TABLE ' . $table_name . '_temp', $row['sql']);
-					$statements[] = 'INSERT INTO ' . $table_name . '_temp SELECT * FROM ' . $table_name;
-					$statements[] = 'DROP TABLE ' . $table_name;
-
-					preg_match('#\((.*)\)#s', $row['sql'], $matches);
-
-					$new_table_cols = trim($matches[1]);
-					$old_table_cols = preg_split('/,(?![\s\w]+\))/m', $new_table_cols);
-					$column_list = array();
-
-					foreach ($old_table_cols as $declaration)
-					{
-						$entities = preg_split('#\s+#', trim($declaration));
-						if ($entities[0] == 'PRIMARY' || $entities[0] === $column_name)
-						{
-							continue;
-						}
-						$column_list[] = $entities[0];
-					}
-
-					$columns = implode(',', $column_list);
-
-					$new_table_cols = preg_replace('/' . $column_name . '[^,]+(?:,|$)/m', '', $new_table_cols);
-
-					// create a new table and fill it up. destroy the temp one
-					$statements[] = 'CREATE TABLE ' . $table_name . ' (' . $new_table_cols . ');';
-					$statements[] = 'INSERT INTO ' . $table_name . ' (' . $columns . ') SELECT ' . $columns . ' FROM ' . $table_name . '_temp;';
-					$statements[] = 'DROP TABLE ' . $table_name . '_temp';
-
-					$statements[] = 'commit';
+					break;
 				}
-				else
+
+				$row = $this->db->sql_fetchrow($result);
+				$this->db->sql_freeresult($result);
+
+				$statements[] = 'begin';
+
+				// Create a backup table and populate it, destroy the existing one
+				$statements[] = preg_replace('#CREATE\s+TABLE\s+"?' . $table_name . '"?#i', 'CREATE TEMPORARY TABLE ' . $table_name . '_temp', $row['sql']);
+				$statements[] = 'INSERT INTO ' . $table_name . '_temp SELECT * FROM ' . $table_name;
+				$statements[] = 'DROP TABLE ' . $table_name;
+
+				preg_match('#\((.*)\)#s', $row['sql'], $matches);
+
+				$new_table_cols = trim($matches[1]);
+				$old_table_cols = preg_split('/,(?![\s\w]+\))/m', $new_table_cols);
+				$column_list = array();
+
+				foreach ($old_table_cols as $declaration)
 				{
-					$statements[] = 'ALTER TABLE ' . $table_name . ' DROP COLUMN ' . $column_name;
+					$entities = preg_split('#\s+#', trim($declaration));
+					if ($entities[0] == 'PRIMARY' || $entities[0] === $column_name)
+					{
+						continue;
+					}
+					$column_list[] = $entities[0];
 				}
+
+				$columns = implode(',', $column_list);
+
+				$new_table_cols = preg_replace('/' . $column_name . '[^,]+(?:,|$)/m', '', $new_table_cols);
+
+				// create a new table and fill it up. destroy the temp one
+				$statements[] = 'CREATE TABLE ' . $table_name . ' (' . $new_table_cols . ');';
+				$statements[] = 'INSERT INTO ' . $table_name . ' (' . $columns . ') SELECT ' . $columns . ' FROM ' . $table_name . '_temp;';
+				$statements[] = 'DROP TABLE ' . $table_name . '_temp';
+
+				$statements[] = 'commit';
 			break;
 		}
 
@@ -1903,6 +1934,7 @@ class phpbb_db_tools
 			case 'oracle':
 			case 'postgres':
 			case 'sqlite':
+			case 'sqlite3':
 				$statements[] = 'DROP INDEX ' . $table_name . '_' . $index_name;
 			break;
 		}
@@ -2009,6 +2041,7 @@ class phpbb_db_tools
 			break;
 
 			case 'sqlite':
+			case 'sqlite3':
 
 				if ($inline && $this->return_statements)
 				{
@@ -2087,6 +2120,7 @@ class phpbb_db_tools
 			case 'postgres':
 			case 'oracle':
 			case 'sqlite':
+			case 'sqlite3':
 				$statements[] = 'CREATE UNIQUE INDEX ' . $table_name . '_' . $index_name . ' ON ' . $table_name . '(' . implode(', ', $column) . ')';
 			break;
 
@@ -2130,6 +2164,7 @@ class phpbb_db_tools
 			case 'postgres':
 			case 'oracle':
 			case 'sqlite':
+			case 'sqlite3':
 				$statements[] = 'CREATE INDEX ' . $table_name . '_' . $index_name . ' ON ' . $table_name . '(' . implode(', ', $column) . ')';
 			break;
 
@@ -2221,6 +2256,7 @@ class phpbb_db_tools
 				break;
 
 				case 'sqlite':
+				case 'sqlite3':
 					$sql = "PRAGMA index_info('" . $table_name . "');";
 					$col = 'name';
 				break;
@@ -2240,6 +2276,7 @@ class phpbb_db_tools
 					case 'oracle':
 					case 'postgres':
 					case 'sqlite':
+					case 'sqlite3':
 						$row[$col] = substr($row[$col], strlen($table_name) + 1);
 					break;
 				}
@@ -2375,6 +2412,7 @@ class phpbb_db_tools
 			break;
 
 			case 'sqlite':
+			case 'sqlite3':
 
 				if ($inline && $this->return_statements)
 				{

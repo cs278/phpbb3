@@ -124,6 +124,7 @@ class acp_profile
 					switch ($db->sql_layer)
 					{
 						case 'sqlite':
+						case 'sqlite3':
 							$sql = "SELECT sql
 								FROM sqlite_master
 								WHERE type = 'table'
@@ -1406,6 +1407,7 @@ class acp_profile
 			break;
 
 			case 'sqlite':
+			case 'sqlite3':
 
 				switch ($field_type)
 				{
@@ -1437,7 +1439,9 @@ class acp_profile
 				}
 
 				// We are defining the biggest common value, because of the possibility to edit the min/max values of each field.
-				if (version_compare(sqlite_libversion(), '3.0') == -1)
+				// SQLite2 always has to do this mess, or SQLite3 <= 3.1.3 per the following:
+				// "After ADD COLUMN has been run on a database, that database will not be readable by SQLite version 3.1.3 and earlier." -- http://www.sqlite.org/lang_altertable.html
+				if ($db->sql_layer == 'sqlite' || version_compare($db->sql_server_info(true), '3.1.3', '<='))
 				{
 					$sql = "SELECT sql
 						FROM sqlite_master

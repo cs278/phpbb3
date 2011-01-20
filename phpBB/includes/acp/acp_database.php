@@ -99,6 +99,11 @@ class acp_database
 								$extractor = new sqlite_extractor($download, $store, $format, $filename, $time);
 							break;
 
+							case 'sqlite3':
+								// @todo Syntax is identical, methods are not.
+								throw new Exception('Somebody forgot to fix this hrm');
+							break;
+
 							case 'postgres':
 								$extractor = new postgres_extractor($download, $store, $format, $filename, $time);
 							break;
@@ -133,6 +138,7 @@ class acp_database
 								switch ($db->sql_layer)
 								{
 									case 'sqlite':
+									case 'sqlite3':
 									case 'firebird':
 										$extractor->flush('DELETE FROM ' . $table_name . ";\n");
 									break;
@@ -325,6 +331,7 @@ class acp_database
 								case 'mysql4':
 								case 'mysqli':
 								case 'sqlite':
+								case 'sqlite3':
 									while (($sql = $fgetd($fp, ";\n", $read, $seek, $eof)) !== false)
 									{
 										$db->sql_query($sql);

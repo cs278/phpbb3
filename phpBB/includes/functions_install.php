@@ -135,6 +135,16 @@ function get_available_dbms($dbms = false, $return_unavailable = false, $only_20
 			'AVAILABLE'		=> true,
 			'2.0.x'			=> false,
 		),
+		'sqlite3'		=> array(
+			'LABEL'			=> 'SQLite3',
+			'SCHEMA'		=> 'sqlite',
+			'MODULE'		=> 'sqlite3',
+			'DELIM'			=> ';',
+			'COMMENTS'		=> 'remove_remarks',
+			'DRIVER'		=> 'sqlite3',
+			'AVAILABLE'		=> true,
+			'2.0.x'			=> false,
+		),
 	);
 
 	if ($dbms)
@@ -223,6 +233,7 @@ function get_tables($db)
 		break;
 
 		case 'sqlite':
+		case 'sqlite3':
 			$sql = 'SELECT name
 				FROM sqlite_master
 				WHERE type = "table"';
@@ -292,14 +303,14 @@ function connect_check_db($error_connect, &$error, $dbms_details, $table_prefix,
 	$db->sql_return_on_error(true);
 
 	// Check that we actually have a database name before going any further.....
-	if ($dbms_details['DRIVER'] != 'sqlite' && $dbms_details['DRIVER'] != 'oracle' && $dbname === '')
+	if ($dbms_details['DRIVER'] != 'sqlite' && $dbms_details['DRIVER'] != 'sqlite3' && $dbms_details['DRIVER'] != 'oracle' && $dbname === '')
 	{
 		$error[] = $lang['INST_ERR_DB_NO_NAME'];
 		return false;
 	}
 
 	// Make sure we don't have a daft user who thinks having the SQLite database in the forum directory is a good idea
-	if ($dbms_details['DRIVER'] == 'sqlite' && stripos(phpbb_realpath($dbhost), phpbb_realpath('../')) === 0)
+	if ($dbms_details['DRIVER'] == 'sqlite' && $dbms_details['DRIVER'] == 'sqlite3' && stripos(phpbb_realpath($dbhost), phpbb_realpath('../')) === 0)
 	{
 		$error[] = $lang['INST_ERR_DB_FORUM_PATH'];
 		return false;
@@ -329,6 +340,7 @@ function connect_check_db($error_connect, &$error, $dbms_details, $table_prefix,
 		break;
 
 		case 'sqlite':
+		case 'sqlite3':
 			$prefix_length = 200;
 		break;
 
@@ -384,6 +396,8 @@ function connect_check_db($error_connect, &$error, $dbms_details, $table_prefix,
 					$error[] = $lang['INST_ERR_DB_NO_SQLITE'];
 				}
 			break;
+
+			// @todo Do we need something here for sqlite3?
 
 			case 'firebird':
 				// check the version of FB, use some hackery if we can't get access to the server info

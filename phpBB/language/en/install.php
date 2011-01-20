@@ -153,6 +153,7 @@ $lang = array_merge($lang, array(
 	'DLL_ORACLE'				=> 'Oracle',
 	'DLL_POSTGRES'				=> 'PostgreSQL 7.x/8.x',
 	'DLL_SQLITE'				=> 'SQLite',
+	'DLL_SQLITE3'				=> 'SQLite 3',
 	'DLL_XML'					=> 'XML support [ Jabber ]',
 	'DLL_ZLIB'					=> 'zlib compression support [ gz, .tar.gz, .zip ]',
 	'DL_CONFIG'					=> 'Download config',
@@ -213,6 +214,7 @@ $lang = array_merge($lang, array(
 		<li>MySQL 3.23 or above (MySQLi supported)</li>
 		<li>PostgreSQL 7.3+</li>
 		<li>SQLite 2.8.2+</li>
+		<li>SQLite 3+</li>
 		<li>Firebird 2.1+</li>
 		<li>MS SQL Server 2000 or above (directly or via ODBC)</li>
 		<li>MS SQL Server 2005 or above (native)</li>

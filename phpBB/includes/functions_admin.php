@@ -2344,6 +2344,7 @@ function cache_moderators()
 	switch ($db->sql_layer)
 	{
 		case 'sqlite':
+		case 'sqlite3':
 		case 'firebird':
 			$db->sql_query('DELETE FROM ' . MODERATOR_CACHE_TABLE);
 		break;
@@ -3041,6 +3042,7 @@ function get_database_size()
 		break;
 
 		case 'sqlite':
+		case 'sqlite3':
 			global $dbhost;
 
 			if (file_exists($dbhost))

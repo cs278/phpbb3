@@ -1648,6 +1648,7 @@ function mass_auth($ug_type, $forum_id, $ug_id, $acl_list, $setting = ACL_NO)
 
 					case 'mssql':
 					case 'sqlite':
+					case 'sqlite3':
 					case 'mssqlnative':
 						$sql = implode(' UNION ALL ', preg_replace('#^(.*?)$#', 'SELECT \1', $sql_subary));
 					break;
@@ -2003,6 +2004,7 @@ function update_topics_posted()
 	switch ($db->sql_layer)
 	{
 		case 'sqlite':
+		case 'sqlite3':
 		case 'firebird':
 			$db->sql_query('DELETE FROM ' . TOPICS_POSTED_TABLE);
 		break;
