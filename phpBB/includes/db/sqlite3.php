@@ -188,7 +188,7 @@ class dbal_sqlite3 extends dbal
 	*/
 	function sql_affectedrows()
 	{
-		return ($this->db_connect_id) ? $this->db->changes() : false;
+		return ($this->db instanceof SQLite3) ? $this->db->changes() : false;
 	}
 
 	/**
