@@ -47,6 +47,7 @@ class phpbb_database_test_connection_manager
 		switch ($this->dbms['PDO'])
 		{
 			case 'sqlite2':
+			case 'sqlite':
 				$dsn .= $this->config['dbhost'];
 			break;
 
@@ -112,6 +113,7 @@ class phpbb_database_test_connection_manager
 		switch ($this->config['dbms'])
 		{
 			case 'sqlite':
+			case 'sqlite3':
 				if (file_exists($this->config['dbhost']))
 				{
 					unlink($this->config['dbhost']);
@@ -157,6 +159,7 @@ class phpbb_database_test_connection_manager
 			break;
 
 			case 'sqlite':
+			case 'sqlite3':
 				$sql = 'SELECT name
 					FROM sqlite_master
 					WHERE type = "table"';
@@ -266,7 +269,7 @@ class phpbb_database_test_connection_manager
 			unset($data[key($data)]);
 		}
 
-		if ($this->config['dbms'] == 'sqlite')
+		if (strpos($this->config['dbms'], 'sqlite') === 0)
 		{
 			// remove comment lines starting with # - they are not proper sqlite
 			// syntax and break sqlite2
@@ -329,6 +332,11 @@ class phpbb_database_test_connection_manager
 				'SCHEMA'		=> 'sqlite',
 				'DELIM'			=> ';',
 				'PDO'			=> 'sqlite2',
+			),
+			'sqlite3'		=> array(
+				'SCHEMA'		=> 'sqlite',
+				'DELIM'			=> ';',
+				'PDO'			=> 'sqlite',
 			),
 		);
 
