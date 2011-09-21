@@ -310,7 +310,7 @@ function connect_check_db($error_connect, &$error, $dbms_details, $table_prefix,
 	}
 
 	// Make sure we don't have a daft user who thinks having the SQLite database in the forum directory is a good idea
-	if ($dbms_details['DRIVER'] == 'sqlite' && $dbms_details['DRIVER'] == 'sqlite3' && stripos(phpbb_realpath($dbhost), phpbb_realpath('../')) === 0)
+	if (strpos($dbms_details['DRIVER'], 'sqlite') === 0 && stripos(phpbb_realpath($dbhost), phpbb_realpath('../')) === 0)
 	{
 		$error[] = $lang['INST_ERR_DB_FORUM_PATH'];
 		return false;
