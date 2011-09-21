@@ -29,37 +29,6 @@ include_once($phpbb_root_path . 'includes/db/dbal.' . $phpEx);
 class dbal_sqlite3 extends dbal
 {
 	var $db;
-	var $query_result_objs = array();
-	var $query_result_counter = 0;
-	var $int_query;
-
-	/**
-	* @todo investigate
-	*/
-	function set_result($result, $result_id)
-	{
-		$this->query_result_objs[$result_id] = $result;
-	}
-
-	/**
-	* @todo investigate
-	*/
-	function get_result($result_id)
-	{
-		return $this->query_result_objs[$result_id];
-	}
-
-	/**
-	* @todo investigate
-	*/
-	function delete_result($result_id)
-	{
-		if (isset($this->query_result_objs[$result_id]) && is_object($this->query_result_objs[$result_id]))
-		{
-			$this->query_result_objs[$result_id]->finalize();
-		}
-		unset($this->query_result_objs[$result_id]);
-	}
 
 	/**
 	* Connect to server
@@ -146,8 +115,6 @@ class dbal_sqlite3 extends dbal
 	{
 		global $cache;
 
-		$was_error = false;
-
 		if ($query != '')
 		{
 			// EXPLAIN only in extra debug mode
@@ -162,42 +129,11 @@ class dbal_sqlite3 extends dbal
 
 			if ($this->query_result === false)
 			{
-				try
-				{
-					$this->int_query = $query;
+				$this->query_result = @$this->db->query($query);
 
-					if (strpos($query, 'SELECT') !== 0 && strpos($query, 'PRAGMA') !== 0)
-					{
-						if ($this->return_on_error)
-						{
-							$error_reporting = error_reporting(E_NONE);
-						}
-
-						$was_error = !$this->db->exec($query);
-
-						$this->query_result_counter++;
-						$this->query_result = $this->query_result_counter;
-
-						$this->set_result(null, $this->query_result);
-
-						if ($this->return_on_error)
-						{
-							error_reporting($error_reporting);
-						}
-					}
-					else
-					{
-						$this->query_result_counter++;
-						$this->query_result = $this->query_result_counter;
-						$res = $this->db->query( $query );
-						$this->set_result($res, $this->query_result);
-					}
-				}
-				catch (Exception $error)
+				if ($this->query_result === false)
 				{
 					$this->sql_error($query);
-
-					$was_error = true;
 				}
 
 				if (defined('DEBUG_EXTRA'))
@@ -207,14 +143,13 @@ class dbal_sqlite3 extends dbal
 
 				if ($cache_ttl && method_exists($cache, 'sql_save'))
 				{
-					 $this->open_queries[(int) $this->query_result] = $this->query_result;
+					$this->open_queries[(int) $this->query_result] = $this->query_result;
 
-					 $cache->sql_save($query, $this->query_result, $cache_ttl);
+					$cache->sql_save($query, $this->query_result, $cache_ttl);
 				}
-				else if (strpos($query, 'SELECT') === 0 && $this->query_result)
+				else if (is_object($this->query_result))
 				{
-					 $this->open_queries[(int) $this->query_result] = $this->query_result;
-					//$this->query_result_id++;
+					$this->open_queries[spl_object_hash($this->query_result)] = $this->query_result;
 				}
 			}
 			else if (defined('DEBUG_EXTRA'))
@@ -223,11 +158,6 @@ class dbal_sqlite3 extends dbal
 			}
 		}
 		else
-		{
-			return false;
-		}
-
-		if ($was_error)
 		{
 			return false;
 		}
@@ -273,58 +203,17 @@ class dbal_sqlite3 extends dbal
 			$query_id = $this->query_result;
 		}
 
-		if (isset($cache->sql_rowset[$query_id]))
+		if (!is_object($query_id) && isset($cache->sql_rowset[$query_id]))
 		{
 			return $cache->sql_fetchrow($query_id);
 		}
 
-		if ($query_id === false)
+		if (!is_object($query_id))
 		{
 			return false;
 		}
 
-		$query_result_obj = $this->get_result($query_id);
-
-		if (isset($query_result_obj) && is_object($query_result_obj))
-		{
-			try
-			{
-				$row = $query_result_obj->fetchArray(SQLITE3_ASSOC);
-			}
-			catch (Exception $error)
-			{
-				$this->sql_error($this->int_query);
-			}
-		}
-		else
-		{
-			return false;
-		}
-
-		if (!$row || !sizeof($row) || !is_array($row))
-		{
-			return $row;
-		}
-
-		// @todo What is this for?
-		$rowx = array();
-
-		foreach ($row as $key => $value)
-		{
-			$pos = strpos($key, '.');
-
-			if ($pos > 0)
-			{
-				$keyx = substr($key, $pos + 1);
-				$rowx[$keyx] = $value;
-			}
-			else
-			{
-				$rowx[$key] = $value;
-			}
-		}
-
-		return $rowx;
+		return $query_id->fetchArray(SQLITE3_ASSOC);
 	}
 
 	/**
@@ -340,13 +229,13 @@ class dbal_sqlite3 extends dbal
 			$query_id = $this->query_result;
 		}
 
-		if (isset($cashe) && isset($cache->sql_rowset[$query_id]))
+		if (!is_object($query_id) && isset($cache->sql_rowset[$query_id]))
 		{
 			return $cache->sql_rowseek($rownum, $query_id);
 		}
 
-		// @todo This seems largely useless currently :-/
-		return true; //($query_id !== false) ? @sqlite_seek($query_id, $rownum) : false;
+		// @todo Implement seeking the hard way.
+		throw new BadMethodCallException('sqlite3 does not support row seeking.');
 	}
 
 	/**
@@ -374,7 +263,11 @@ class dbal_sqlite3 extends dbal
 			return $cache->sql_freeresult($query_id);
 		}
 
-		$this->delete_result($query_id);
+		if (is_object($query_id) && isset($this->open_queries[spl_object_hash($query_id)]))
+		{
+			unset($this->open_queries[spl_object_hash($query_id)]);
+			$query_id->finalize();
+		}
 
 		return true;
 	}
@@ -460,26 +353,5 @@ class dbal_sqlite3 extends dbal
 				$results->finalize();
 			break;
 		}
-	}
-
-	/**
-	* Return column types
-	* @todo Where has this come from?
-	*/
-	function fetch_column_types($table_name)
-	{
-		$col_types = array();
-		$col_info_res  = $this->db->query( "PRAGMA table_info('". $table_name . "')");
-
-		while ($col_info = $col_info_res->fetchArray(SQLITE3_ASSOC))
-		{
-			$column_name = $col_info[name];
-			$column_type = $col_info[type];
-			$col_types[$column_name] = $column_type;
-		}
-
-		$col_info_res->finalize();
-
-		return $col_types;
 	}
 }
