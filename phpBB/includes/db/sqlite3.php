@@ -272,6 +272,22 @@ class dbal_sqlite3 extends dbal
 		return true;
 	}
 
+	function _sql_validate_value($var)
+	{
+		if (is_string($var) && strpos($var, "\x00") !== false)
+		{
+			$var = current(unpack('H*', $var));
+
+			$var = SQLite3::escapeString($var);
+
+			return "x'$var'";
+		}
+		else
+		{
+			return parent::_sql_validate_value($var);
+		}
+	}
+
 	/**
 	* Escape string used in sql query
 	*/
