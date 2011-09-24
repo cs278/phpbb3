@@ -286,14 +286,6 @@ function change_topic_type($action, $topic_ids)
 {
 	global $auth, $user, $db, $phpEx, $phpbb_root_path;
 
-	// For changing topic types, we only allow operations in one forum.
-	$forum_id = check_ids($topic_ids, TOPICS_TABLE, 'topic_id', array('f_announce', 'f_sticky', 'm_'), true);
-
-	if ($forum_id === false)
-	{
-		return;
-	}
-
 	switch ($action)
 	{
 		case 'make_announce':
@@ -319,6 +311,23 @@ function change_topic_type($action, $topic_ids)
 			$check_acl = '';
 			$l_new_type = (sizeof($topic_ids) == 1) ? 'MCP_MAKE_NORMAL' : 'MCP_MAKE_NORMALS';
 		break;
+	}
+
+	if ($check_acl)
+	{
+		$check_acl = array($check_acl, 'm_');
+	}
+	else
+	{
+		$check_acl = array('m_');
+	}
+
+	// For changing topic types, we only allow operations in one forum.
+	$forum_id = check_ids($topic_ids, TOPICS_TABLE, 'topic_id', $check_acl, true);
+
+	if ($forum_id === false)
+	{
+		return;
 	}
 
 	$redirect = request_var('redirect', build_url(array('action', 'quickmod')));
