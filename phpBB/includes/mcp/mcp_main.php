@@ -996,7 +996,7 @@ function mcp_fork_topic($topic_ids)
 	global $auth, $user, $db, $template, $config;
 	global $phpEx, $phpbb_root_path;
 
-	if (!check_ids($topic_ids, TOPICS_TABLE, 'topic_id', array('m_')))
+	if (!check_ids($topic_ids, TOPICS_TABLE, 'topic_id', array('m_move')))
 	{
 		return;
 	}
