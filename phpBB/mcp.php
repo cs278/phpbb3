@@ -859,9 +859,19 @@ function check_ids(&$ids, $table, $sql_id, $acl_list = false, $single_forum = fa
 
 	while ($row = $db->sql_fetchrow($result))
 	{
-		if ($acl_list && $row['forum_id'] && !$auth->acl_gets($acl_list, $row['forum_id']))
+		if ($acl_list && $row['forum_id'])
 		{
-			continue;
+			$allowed = 1;
+
+			foreach ($acl_list as $acl)
+			{
+				$allowed &= $auth->acl_gets($acl, $row['forum_id']);
+			}
+
+			if (!$allowed)
+			{
+				continue;
+			}
 		}
 
 		if ($acl_list && !$row['forum_id'] && !$auth->acl_getf_global($acl_list))
