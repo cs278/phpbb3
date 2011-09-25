@@ -129,7 +129,14 @@ class install_install extends module
 			'BODY'		=> $lang['REQUIREMENTS_EXPLAIN'],
 		));
 
-		$passed = array('php' => false, 'db' => false, 'files' => false, 'pcre' => false, 'imagesize' => false,);
+		$passed = array(
+			'php'		=> false,
+			'db'		=> false,
+			'files'		=> false,
+			'pcre'		=> false,
+			'imagesize'	=> false,
+			'json'		=> false,
+		);
 
 		// Test for basic PHP settings
 		$template->assign_block_vars('checks', array(
@@ -240,6 +247,28 @@ class install_install extends module
 		$template->assign_block_vars('checks', array(
 			'TITLE'			=> $lang['PCRE_UTF_SUPPORT'],
 			'TITLE_EXPLAIN'	=> $lang['PCRE_UTF_SUPPORT_EXPLAIN'],
+			'RESULT'		=> $result,
+
+			'S_EXPLAIN'		=> true,
+			'S_LEGEND'		=> false,
+		));
+
+		if (
+			extension_loaded('json') &&
+			function_exists('json_encode')&&
+			function_exists('json_decode'))
+		{
+			$passed['pcre'] = true;
+			$result = '<strong style="color:green">' . $lang['YES'] . '</strong>';
+		}
+		else
+		{
+			$result = '<strong style="color:red">' . $lang['NO'] . '</strong>';
+		}
+
+		$template->assign_block_vars('checks', array(
+			'TITLE'			=> $lang['JSON_SUPPORT'],
+			'TITLE_EXPLAIN'	=> $lang['JSON_SUPPORT_EXPLAIN'],
 			'RESULT'		=> $result,
 
 			'S_EXPLAIN'		=> true,

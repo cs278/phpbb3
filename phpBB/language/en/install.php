@@ -258,6 +258,9 @@ $lang = array_merge($lang, array(
 	'INST_ERR_USER_TOO_SHORT'	=> 'The username you entered is too short. The minimum length is 3 characters.',
 	'INVALID_PRIMARY_KEY'		=> 'Invalid primary key : %s',
 
+	'JSON_SUPPORT'				=> 'JSON support',
+	'JSON_SUPPORT_EXPLAIN'		=> '<strong>Required</strong> - phpBB will not run without the JSON extension.',
+
 	'LONG_SCRIPT_EXECUTION'		=> 'Please note that this can take a while... Please do not stop the script.',
 
 	// mbstring
